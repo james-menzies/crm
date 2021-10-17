@@ -3,11 +3,17 @@ openapi: 3.0.0
 info:
   title: CRM API
   description: The operations that can be performed by the membership-based CRM.
-  version: 1.0
-
+  version: "1.0"
+tags:
+  - name: Clients
+  - name: Memberships
+  - name: Orders
+  - name: Products
 paths:
   /clients:
     get:
+      tags:
+        - Clients
       parameters:
         - in: query
           name: search
@@ -25,6 +31,8 @@ paths:
                   clients:
                     $ref: '#/components/schemas/Client'
     post:
+      tags:
+        - Clients
       responses:
         200:
           $ref: '#/components/responses/Client200'
@@ -32,16 +40,22 @@ paths:
     parameters:
       - $ref: '#/components/parameters/id'
     get:
+      tags:
+        - Clients
       responses:
         200:
           $ref: '#/components/responses/Client200'
     patch:
+      tags:
+        - Clients
       requestBody:
         $ref: '#/components/schemas/Client'
       responses:
         200:
           $ref: '#/components/responses/Client200'
     delete:
+      tags:
+        - Clients
       responses:
         200:
           $ref: '#/components/responses/Client200'
@@ -49,6 +63,8 @@ paths:
     parameters:
       - $ref: '#/components/parameters/id'
     get:
+      tags:
+        - Clients
       responses:
         200:
           description: Success
@@ -60,9 +76,11 @@ paths:
                   page:
                     $ref: '#/components/schemas/Page'
                   orders:
-                    $ref: '#/components/schemas/Order'
+                    $ref: '#/components/schemas/OrderStub'
   /orders:
     get:
+      tags:
+        - Orders
       parameters:
         - in: query
           name: client_id
@@ -97,23 +115,43 @@ paths:
                   page:
                     $ref: '#/components/schemas/Page'
                   orders:
-                    $ref: '#/components/schemas/Order'
+                    $ref: '#/components/schemas/OrderStub'
     post:
+      tags:
+        - Orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderStub'
       responses:
         200:
-          $ref: '#/components/responses/Order200'
+          $ref: '#/components/responses/OrderStub200'
   /orders/{id}:
+    parameters:
+      - $ref: '#/components/parameters/id'
+    description: >
+      Update an order. Note that once an order is finalized, the order can no longer be modified.
     patch:
-      parameters:
-        - $ref: '#/components/schemas/Order'
+      tags:
+        - Orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderStub'
       responses:
         200:
           $ref: '#/components/responses/Order200'
     delete:
+      tags:
+        - Orders
       responses:
         200:
           $ref: '#/components/responses/Order200'
     get:
+      tags:
+        - Orders
       responses:
         200:
           description: Success
@@ -122,13 +160,184 @@ paths:
               schema:
                 allOf:
                   - $ref: '#/components/schemas/Order'
-                  - type: object
-                    properties:
-                      items:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/OrderItem'
+  '/orders/{id}/items':
+    post:
+      tags:
+        - Orders
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderItem'
+      responses:
+        200:
+          $ref: '#/components/schemas/OrderItem'
+    patch:
+      tags:
+        - Orders
+      description: >
+        Optionally update existing items by providing the corresponding ID. If no ID is provided,
+        a new item will be created. To leave existing fields as-is, simply leave out the field.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderItem'
+              example:
+                - id: 2
+                  type: product
+                  product_id: 34
+                  quantity: 4
+                - type: product
+                  product_id: 45
+                  quantity: 3
+      responses:
+        200:
+          $ref: '#/components/schemas/OrderItem'
+    put:
+      tags:
+        - Orders
+      description: >
+        This will clobber any existing items in the order and replace them with the
+        ones provided in the request body.
 
+        To remove all items, provide an empty array.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderItem'
+      responses:
+        200:
+          $ref: '#/components/schemas/OrderItem'
+  "/memberships":
+    get:
+      tags:
+        - Memberships
+      parameters:
+        - in: query
+          name: search
+          required: false
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  page:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Page'
+                  products:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Membership'
+    post:
+      tags:
+        - Memberships
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Membership'
+      responses:
+        200:
+          $ref: '#/components/responses/Membership200'
+  "/memberships/{id}":
+    parameters:
+      - $ref: '#/components/parameters/id'
+    get:
+      tags:
+        - Memberships
+      responses:
+        200:
+          $ref: '#/components/responses/Membership200'
+    patch:
+      tags:
+        - Memberships
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Membership'
+      responses:
+        200:
+          $ref: '#/components/responses/Membership200'
+    delete:
+      tags:
+        - Memberships
+      responses:
+        200:
+          $ref: '#/components/responses/Membership200'
+  "/products":
+    get:
+      tags:
+        - Products
+      parameters:
+        - in: query
+          name: search
+          required: false
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  page:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Page'
+                  products:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ProductStub'
+    post:
+      tags:
+        - Products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        200:
+          $ref: '#/components/responses/Product200'
+  "/products/{id}":
+    parameters:
+      - $ref: '#/components/parameters/id'
+    get:
+      tags:
+        - Products
+      responses:
+        200:
+          $ref: '#/components/responses/Product200'
+    patch:
+      tags:
+        - Products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Product'
+      responses:
+        200:
+          $ref: '#/components/responses/Product200'
+    delete:
+      tags:
+        - Products
+      responses:
+        200:
+          $ref: '#/components/responses/Product200'
 components:
   parameters:
     id:
@@ -142,12 +351,24 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Client'
-    Order200:
+    Membership200:
       description: Success
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Order'
+            $ref: '#/components/schemas/Membership'
+    Product200:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Product'
+    OrderStub200:
+      description: Success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/OrderStub'
   schemas:
     Client:
       allOf:
@@ -184,6 +405,15 @@ components:
       required:
         - company_name
     Order:
+      allOf:
+        - $ref: '#/components/schemas/OrderStub'
+        - type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderItem'
+    OrderStub:
       type: object
       properties:
         id:
@@ -202,14 +432,21 @@ components:
         order_total:
           type: integer
           example: 51000
+          readOnly: true
         is_complete:
           type: boolean
           example: false
       required:
         - date
-        - cli
+        - client_id
     OrderItem:
       type: object
+      description: >
+        An order item indicates either a quantity of products or a sold membership
+        in an order. There can only be one `OrderItem` in an order. It is imperative
+        that either `product_id` or `membership_id` are supplied but not both.
+
+        `price_per_unit` and `subtotal` will be dynamically calculated.
       properties:
         product:
           allOf:
@@ -218,15 +455,33 @@ components:
         product_id:
           type: integer
           writeOnly: true
+        membership:
+          allOf:
+            - $ref: '#/components/schemas/Membership'
+            - readOnly: true
+            - example: null
+        membership_id:
+          type: integer
+          writeOnly: true
+        type:
+          type: string
+          enum:
+            - membership
+            - product
+          example: product
         quantity:
           type: integer
           example: 2
         price_per_unit:
           type: integer
           example: 1000
+          readOnly: true
         subtotal:
           type: integer
           example: 2000
+          readOnly: true
+      required:
+        - quantity
     Membership:
       type: object
       properties:
@@ -239,9 +494,14 @@ components:
         price:
           type: integer
           example: 10000
-        length:
+        length_quantity:
+          type: integer
+          example: 12
+        length_period:
           type: string
-          example: "12 month"
+          enum:
+            - "month"
+            - "year"
     Page:
       type: object
       properties:
