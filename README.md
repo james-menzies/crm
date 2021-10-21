@@ -76,11 +76,23 @@ Most of it is straightforward to navigate, however here are some extra tips to g
 * The clients page will contain information about past orders, and the orders page will contain reference to the billed client. These references will be interactive, allowing the user to navigate easily the two entities. 
 * The order page will allow the user to dynamically add a membership, and be able to see what the client stands to save by doing so.
 
-## Database
-
-(Coming Soon)
 
 ## API Specification
 
-(Coming Soon)
+The core operations have been described in [this OpenAPI specification](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/james-menzies/crm/main/docs/swagger.yaml). For the most part, the operations are self-explanatory, however it's worth noting the method for interacting with order objects.
 
+## Database Diagram
+
+![](docs/diagrams/CRM_ERD.png)
+
+### Enums
+
+* `Memberships.length_period [ year | month ]`: The unit of time the membership is measured in.
+* `OrderItems.type [ membership | product ]`: Whether the item in the order represents a membership or a product. 
+
+### Considerations
+
+* The idea of memberships and products interfacing with an order in the same way will help aggregate totals in a cleaner way, with the intent of better performance.
+* It will however be up to the database to enforce that only one of the `membership_id` and `product_id` variables are non-null.
+* When an order is not finalized, the pricing of the order is inherently volatile. This means that if the price of a product in an order were to change, the total cost of the order would change as well. This is controlled by making all of the price fields in the `OrderItem` objects nullable. If it is nullable, that indicates that the price should be dynamically calculated by the backend before responding to a request.
+* If `Order.is_complete` is true, then **_all_** prices in the `Order` and child `OrderItem` objects should have hard coded price values.
