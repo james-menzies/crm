@@ -161,6 +161,8 @@ paths:
                 allOf:
                   - $ref: '#/components/schemas/Order'
   '/orders/{id}/items':
+    parameters:
+      $ref: '#/components/parameters/id'
     post:
       tags:
         - Orders
