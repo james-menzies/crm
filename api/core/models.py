@@ -13,10 +13,10 @@ class User(AbstractUser):
 class Client(models.Model):
     company_name = models.CharField(max_length=60)
     membership_expiry = models.DateField()
-    description = models.TextField()
+    description = models.TextField(null=True)
     contact_name = models.CharField(max_length=60)
-    contact_email = models.EmailField()
-    contact_phone = models.CharField(max_length=15)
+    contact_email = models.EmailField(null=True, blank=True)
+    contact_phone = models.CharField(max_length=15, null=True, blank=True)
 
 
 class Membership(models.Model):
@@ -27,6 +27,31 @@ class Membership(models.Model):
 
 class Product(models.Model):
     name = models.CharField(max_length=100)
-    description = models.TextField()
+    description = models.TextField(null=True, blank=True)
     non_member_price = models.IntegerField()
     member_price = models.IntegerField()
+
+
+class Order(models.Model):
+    order_date = models.DateField(auto_now=True)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE)
+    order_total = models.IntegerField(null=True, blank=True)
+    is_complete = models.BooleanField(default=False)
+
+
+class OrderItem(models.Model):
+    TYPE_CHOICES = [
+        ('M', 'Membership'),
+        ('P', 'Product'),
+
+    ]
+
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, blank=True, null=True)
+    membership = models.ForeignKey(Membership, on_delete=models.CASCADE, blank=True, null=True)
+    type = models.CharField(choices=TYPE_CHOICES, max_length=1)
+    quantity = models.IntegerField()
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    price_per_unit = models.IntegerField(blank=True)
+    subtotal = models.IntegerField(blank=True)
+
+
