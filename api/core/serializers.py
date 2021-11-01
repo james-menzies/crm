@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from core.models import Client, Product, Membership, Order
+from core.models import Client, Product, Membership, Order, OrderItem
 
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -21,13 +21,18 @@ class MembershipSerializer(serializers.ModelSerializer):
         exclude = []
 
 
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderItem
+        exclude = ['order']
+
+
+
+
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         exclude = []
 
-
-class OrderItemSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = OrderItem
-        exclude = []
+    items = OrderItemSerializer(many=True, read_only=True)

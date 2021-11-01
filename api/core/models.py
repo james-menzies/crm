@@ -41,16 +41,16 @@ class Order(models.Model):
 
 class OrderItem(models.Model):
     TYPE_CHOICES = [
-        ('M', 'Membership'),
-        ('P', 'Product'),
+        ('membership', 'Membership'),
+        ('product', 'Product'),
 
     ]
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE, blank=True, null=True)
     membership = models.ForeignKey(Membership, on_delete=models.CASCADE, blank=True, null=True)
-    type = models.CharField(choices=TYPE_CHOICES, max_length=1)
+    type = models.CharField(choices=TYPE_CHOICES, max_length=10)
     quantity = models.IntegerField()
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
     price_per_unit = models.IntegerField(blank=True)
     subtotal = models.IntegerField(blank=True)
 
