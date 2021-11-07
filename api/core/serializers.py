@@ -21,14 +21,27 @@ class MembershipSerializer(serializers.ModelSerializer):
         exclude = []
 
 
-
 class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
         exclude = ['order']
 
+    subtotal = serializers.IntegerField()
+    product_id = serializers.IntegerField(write_only=True, required=False)
+    membership_id = serializers.IntegerField(write_only=True, required=False)
 
+    def validate(self, data):
 
+        if 'type' not in data:
+            return data
+
+        if data['type'] == 'membership' and 'membership_id' not in data:
+            raise serializers.ValidationError("membership_id must be provided.")
+
+        if data['type'] == 'product' and 'product_id' not in data:
+            raise serializers.ValidationError("product_id must be provided")
+
+        return data
 
 class OrderSerializer(serializers.ModelSerializer):
     class Meta:
@@ -36,3 +49,4 @@ class OrderSerializer(serializers.ModelSerializer):
         exclude = []
 
     items = OrderItemSerializer(many=True, read_only=True)
+

@@ -51,7 +51,10 @@ class OrderItem(models.Model):
     type = models.CharField(choices=TYPE_CHOICES, max_length=10)
     quantity = models.IntegerField()
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
-    price_per_unit = models.IntegerField(blank=True)
-    subtotal = models.IntegerField(blank=True)
+    price_per_unit = models.IntegerField(blank=True, null=True)
+
+    @property
+    def subtotal(self):
+        return self.price_per_unit * self.quantity
 
 
