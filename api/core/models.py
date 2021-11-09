@@ -62,3 +62,4 @@ class OrderItem(models.Model):
     @property
     def subtotal(self):
         return self.price_per_unit * self.quantity
+
