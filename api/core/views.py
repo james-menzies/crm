@@ -52,7 +52,7 @@ class OrderItemViewSet(viewsets.GenericViewSet,
             self.get_queryset().delete()
 
         serializer.save(order=order)
-        return Response(serializer.data)
+        return Response({'status': 'success'})
 
     def get_queryset(self):
         order_id = self.kwargs['id']

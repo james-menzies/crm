@@ -33,11 +33,17 @@ class Product(models.Model):
 
 
 class Order(models.Model):
+
+
     order_date = models.DateField(auto_now=True)
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
-    order_total = models.IntegerField(null=True, blank=True)
     is_complete = models.BooleanField(default=False)
 
+    @property
+    def total(self):
+        return sum([item.subtotal for item in self.items.all()])
+
+order = Order(client=Client())
 
 class OrderItem(models.Model):
     TYPE_CHOICES = [
@@ -56,5 +62,3 @@ class OrderItem(models.Model):
     @property
     def subtotal(self):
         return self.price_per_unit * self.quantity
-
-
