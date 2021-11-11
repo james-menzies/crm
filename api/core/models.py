@@ -20,8 +20,13 @@ class Client(models.Model):
 
 
 class Membership(models.Model):
+    PERIOD_TYPE_CHOICES = [
+        ('m', 'Month'),
+        ('y', 'Year')
+    ]
     name = models.CharField(max_length=100)
-    duration = models.DurationField()
+    period_type = models.CharField(choices=PERIOD_TYPE_CHOICES, max_length=1)
+    period_amount = models.IntegerField()
     price = models.IntegerField()
 
 
@@ -61,5 +66,8 @@ class OrderItem(models.Model):
 
     @property
     def subtotal(self):
+        if not self.price_per_unit:
+            return 0
+
         return self.price_per_unit * self.quantity
 
