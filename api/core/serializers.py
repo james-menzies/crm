@@ -1,3 +1,4 @@
+from django.db.models import prefetch_related_objects
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import get_object_or_404
@@ -5,14 +6,14 @@ from rest_framework.generics import get_object_or_404
 from core.models import Client, Product, Membership, Order, OrderItem
 
 
-class WriteableNestedField(serializers.RelatedField):
+class WriteableNestedField(serializers.PrimaryKeyRelatedField):
 
     def __init__(self, queryset, **kwargs):
         self.queryset = queryset
         super().__init__(**kwargs)
 
-    def to_internal_value(self, data):
-        return get_object_or_404(self.queryset.filter(pk=data))
+    def use_pk_only_optimization(self):
+        return False
 
     def to_representation(self, instance):
         return ItemStub(instance).data
@@ -42,6 +43,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         exclude = ['order']
 
 
+    product = WriteableNestedField(queryset=Product.objects)
     subtotal = serializers.IntegerField(read_only=True)
 
     def update(self, instance, validated_data):
@@ -78,6 +80,20 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = '__all__'
+
+    def create(self, validated_data):
+        item_data = validated_data.pop('items')
+        order = Order.objects.create(**validated_data)
+        items = [OrderItem(order=order, **data) for data in item_data]
+        OrderItem.objects.bulk_create(items)
+        prefetch_related_objects([order], 'items', 'items__product')
+        return order
+
+    def _create_items(self, item_data):
+        items = []
+        existing_product_ids = set()
+
+
 
     total = serializers.IntegerField(read_only=True)
     client = WriteableNestedField(queryset=Client.objects)

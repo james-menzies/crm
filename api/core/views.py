@@ -37,6 +37,13 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         return order
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        order = serializer.save()
+        return Response(self.serializer_class(order).data)
+
+
     def partial_update(self, request, *args, **kwargs):
         return self._update(request.data, partial=True)
 
