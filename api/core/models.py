@@ -11,7 +11,7 @@ class User(AbstractUser):
 
 
 class Client(models.Model):
-    company_name = models.CharField(max_length=60)
+    name = models.CharField(max_length=60)
     membership_expiry = models.DateField()
     description = models.TextField(null=True)
     contact_name = models.CharField(max_length=60)
@@ -40,7 +40,7 @@ class Product(models.Model):
 class Order(models.Model):
 
 
-    order_date = models.DateField(auto_now=True)
+    order_date = models.DateField()
     client = models.ForeignKey(Client, on_delete=models.CASCADE)
     is_complete = models.BooleanField(default=False)
 
@@ -48,7 +48,6 @@ class Order(models.Model):
     def total(self):
         return sum([item.subtotal for item in self.items.all()])
 
-order = Order(client=Client())
 
 class OrderItem(models.Model):
     TYPE_CHOICES = [

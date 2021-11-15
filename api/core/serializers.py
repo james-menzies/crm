@@ -1,8 +1,21 @@
 from rest_framework import serializers
-from rest_framework.relations import HyperlinkedRelatedField
+from rest_framework.exceptions import ValidationError
+from rest_framework.generics import get_object_or_404
 
 from core.models import Client, Product, Membership, Order, OrderItem
 
+
+class WriteableNestedField(serializers.RelatedField):
+
+    def __init__(self, queryset, **kwargs):
+        self.queryset = queryset
+        super().__init__(**kwargs)
+
+    def to_internal_value(self, data):
+        return get_object_or_404(self.queryset.filter(pk=data))
+
+    def to_representation(self, instance):
+        return ItemStub(instance).data
 
 class ClientSerializer(serializers.ModelSerializer):
     class Meta:
@@ -22,12 +35,20 @@ class MembershipSerializer(serializers.ModelSerializer):
         exclude = []
 
 
+
 class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
         exclude = ['order']
 
+
     subtotal = serializers.IntegerField(read_only=True)
+
+    def update(self, instance, validated_data):
+        if 'type' in validated_data and instance.type != validated_data['type']:
+            raise serializers.ValidationError({'type': 'Cannot alter type once created.'})
+
+        return super().update(instance, validated_data)
 
     def validate(self, data):
 
@@ -51,12 +72,17 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def __init__(self, *args, include_items=True, **kwargs):
         super().__init__(*args, **kwargs)
-        if not include_items:
-            self.fields.pop('items')
+        if include_items:
+            self.fields['items'] = OrderItemSerializer(many=True)
 
     class Meta:
         model = Order
-        exclude = []
+        fields = '__all__'
 
-    items = OrderItemSerializer(many=True, read_only=True)
     total = serializers.IntegerField(read_only=True)
+    client = WriteableNestedField(queryset=Client.objects)
+
+class ItemStub(serializers.Serializer):
+
+    id = serializers.IntegerField()
+    name = serializers.CharField()

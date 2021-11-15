@@ -25,33 +25,37 @@ class ProductViewSet(viewsets.ModelViewSet):
 
 
 class OrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.prefetch_related('items')
+    queryset = Order.objects.select_related('client').prefetch_related('items')
     serializer_class = OrderSerializer
 
-    def check_status(self, lookup: int):
+    def get_object(self):
 
-        order = Order.objects.get(pk=lookup)
+        order = get_object_or_404(self.queryset, **self.kwargs)
+
         if order.is_complete:
             raise PermissionDenied('No!', 400)
 
-    def update(self, request, *args, **kwargs):
-        self.check_status(kwargs['pk'])
-        return super().update(request, *args, **kwargs)
+        return order
 
     def partial_update(self, request, *args, **kwargs):
-        self.check_status(kwargs['pk'])
-        return super().partial_update(request, *args, **kwargs)
+        return self._update(request.data, partial=True)
 
-    def complete_order(self, order):
-        """Check if order is set to be finalized. If so, update the membership
-        status of the Client"""
-        if not order.is_complete:
-            return
+    def update(self, request, *args, **kwargs):
+        return self._update(request.data)
 
-        memberships = [item for item in order.items.all() if item.type == 'membership']
+    def _update(self, data, partial=False):
+        order = self.get_object()
+        serializer = self.serializer_class(instance=order, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+
+        if order.is_complete:
+            membership_item : OrderItem = [item for item in order.items.all() if item.type == 'membership'][0]
 
 
 
+        return Response(serializer.data)
 
 
 class OrderItemViewSet(viewsets.GenericViewSet,
